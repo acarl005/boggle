@@ -6,6 +6,7 @@
 * Method definition, arguments, and return values
 * Implement common string methods
 * Simple algorithms and data structures
+* Write tests to handle edge cases in your code
 
 ##Summary
 
@@ -13,11 +14,9 @@ Using your basic `BoggleBoard` generator from before, we're now going to model a
 
 The only rule is that the same dice can't be reused in the same word, i.e., the "word path" can't ever cross itself.
 
-We'll implement a `BoggleBoard#include?` method which works like this:
+We'll implement a `BoggleBoard#include?` method which can be called like this:
 
 ```ruby
-board = BoggleBoard.new
-board.shake!
 board.include?("apple") # => true or false, depending
 ```
 
