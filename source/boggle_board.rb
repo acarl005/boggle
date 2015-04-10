@@ -83,21 +83,31 @@ class BoggleBoard
     string
   end
 
+  def display
+    puts self
+  end
+
   def include?(word)
     word.upcase!.gsub!(/QU/, 'Q')
     start_points = get_coords(word.slice!(0))
     path_found = false
-    start_points.each { |start| path_found ||= find_path(start, word) }
+    start_points.each { |start|
+      temp_array = Marshal.load(Marshal.dump(board))  #clones the nested array
+      temp_array[start.y][start.x] = ' '              #removes the letter so it doesn't get used twice
+      path_found ||= find_path(start, word, temp_array)
+    }
     path_found
   end
 
-  def find_path(coord, wordpath)
+  def find_path(coord, wordpath, board)
     return true if wordpath == ""
     adjacents = coord.adjacents
     path_found = false
     adjacents.each { |new_coord|
-      if self.check_this_coord(new_coord) == wordpath[0]
-        path_found ||= find_path(new_coord, wordpath.slice(1, wordpath.length))
+      if check_this_coord(new_coord, board) == wordpath[0]
+        board[new_coord.y][new_coord.x] = ' '                #removes the letter so it doesn't get used twice
+        temp_array = Marshal.load(Marshal.dump(board))       #clones the nested array
+        path_found ||= find_path(new_coord, wordpath.slice(1, wordpath.length), temp_array)
       end
     }
     path_found
@@ -115,11 +125,14 @@ class BoggleBoard
     coords
   end
 
-  def check_this_coord(coord)
+  def check_this_coord(coord, board)
     board[coord.y][coord.x]
   end
 
 end
+
+
+# Driver test code
 
 game = BoggleBoard.new
 dice = DiceGroup.new
@@ -129,6 +142,6 @@ puts game
 
 coord1 = Coordinate.new(0,2)
 coord2 = Coordinate.new(0,1)
-%w{aietno earil rlto quat ttie}.each { |word| p game.include?(word) }
-%w{lro eitr non}.each { |word| p game.include?(word) == false }
+%w{aietno earil rlto quat ttie ttontq eliato}.each { |word| p game.include?(word) }
+%w{lro eitr non werthterh qeatq}.each { |word| p game.include?(word) == false }
 
