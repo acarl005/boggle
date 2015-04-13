@@ -1,4 +1,5 @@
 TEST_BOARD = [['E', 'T', 'A', 'Q'], ['A', 'I', 'E', 'T'], ['R', 'L', 'T', 'N'], ['I', 'A', 'T', 'O']]
+ENGLISH = File.readlines('words').map { |w| w.downcase.chomp }
 
 class DiceGroup
   attr_reader :dice
@@ -19,8 +20,7 @@ class DiceGroup
       'EEGHNW',
       'AFFKPS',
       'HLNNRZ',
-      'DEILRX'
-    ]
+      'DEILRX' ]
   end
   def roll
     this_die = @dice.sample
@@ -30,11 +30,10 @@ class DiceGroup
 end
 
 class Coordinate
-  attr_accessor :x, :y, :used, :next
-  def initialize(x = nil, y = nil)
+  attr_accessor :x, :y
+  def initialize(x, y)
     @x = x
     @y = y
-    @used = false
   end
 
   def to_s
@@ -60,9 +59,11 @@ class Coordinate
 end
 
 class BoggleBoard
-  attr_reader :board
+  attr_reader :board, :points, :words
   def initialize
-    @board = Array.new(4) { (0..3).map { '_' } }
+    @board = Array.new(4) { (0..3).map { '-' } }
+    @points = 0
+    @words = []
   end
 
   def test
@@ -70,21 +71,25 @@ class BoggleBoard
   end
 
   def shake!
+    @points = 0
+    @words = []
     dice = DiceGroup.new
     @board = Array.new(4) { (0..3).map { dice.roll } }
   end
 
   def to_s
-    string = ''
+    string = <<-BOARD
+      +--------------+
+      |  X  X  X  X  |
+      |  X  X  X  X  |
+      |  X  X  X  X  |
+      |  X  X  X  X  |
+      +--------------+
+    BOARD
     board.each { |row|
-      new_row = row.join('  ') + "  " + "\n"
-      string << new_row.gsub(/Q /, 'Qu')
+      row.each { |let| string.sub!(/X/, let) }
     }
-    string
-  end
-
-  def display
-    puts self
+    string.gsub(/Q /, 'Qu')
   end
 
   def include?(word)
@@ -117,9 +122,7 @@ class BoggleBoard
     coords = []
     board.each_with_index { |row, ind_y|
       row.each_with_index { |letter, ind_x|
-        if letter == let
-          coords << Coordinate.new(ind_x, ind_y)
-        end
+        coords << Coordinate.new(ind_x, ind_y) if letter == let
       }
     }
     coords
@@ -129,6 +132,24 @@ class BoggleBoard
     board[coord.y][coord.x]
   end
 
+  def enter(word)
+    word_path = word.clone
+    return 'must be at least 3 letters' if word.length < 3
+    return 'not an english word' if !ENGLISH.include?(word.downcase) && !ENGLISH.include?(word.downcase.chomp('s'))
+    return 'not found on board' if !self.include?(word_path)
+    return 'word already entered' if @words.include?(word.downcase)
+    @words << word.downcase
+    @points += [1, 1, 2, 3, 5][word.length - 3] || 11
+  end
+
+  def enter!(word)
+    word_path = word.clone
+    return 'must be at least 3 letters' if word.length < 3
+    return 'not found on board' if !self.include?(word_path)
+    return 'word already entered' if @words.include?(word.downcase)
+    @words << word.downcase
+    @points += [1, 1, 2, 3, 5][word.length - 3] || 11
+  end
 end
 
 
@@ -137,11 +158,13 @@ end
 game = BoggleBoard.new
 dice = DiceGroup.new
 puts game
+puts "SHAKING!"
 game.test
 puts game
 
+
 coord1 = Coordinate.new(0,2)
 coord2 = Coordinate.new(0,1)
-%w{aietno earil rlto quat ttie ttontq eliato}.each { |word| p game.include?(word) }
+%w{aietno earil rlto quate ttie ttontq eliato alien}.each { |word| p game.include?(word) }
 %w{lro eitr non werthterh qeatq}.each { |word| p game.include?(word) == false }
 
